@@ -141,7 +141,9 @@ def train():
     opt = tf.train.GradientDescentOptimizer(lr)
 
     # Get images and labels for CIFAR-10.
-    images, labels = cifar10.distorted_inputs()
+    global data_dir
+
+    images, labels = cifar10.distorted_inputs(data_dir)
     batch_queue = tf.contrib.slim.prefetch_queue.prefetch_queue(
           [images, labels], capacity=2 * no_gpus)
     # Calculate the gradients for each model tower.
@@ -248,18 +250,18 @@ def train():
 def main(argv):  # pylint: disable=unused-argument
   # globals variables configurable with arguments 
   #cifar10.maybe_download_and_extract()
-  global train_dir, decay_factor, initial_lr, dropout, max_steps, no_epochs_decay, no_gpus, no_examples_epoch
+  global train_dir, decay_factor, initial_lr, dropout, max_steps, no_epochs_decay, no_gpus, no_examples_epoch, data_dir
   if tf.gfile.Exists(train_dir):
     tf.gfile.DeleteRecursively(train_dir)
   tf.gfile.MakeDirs(train_dir)
   try:
-    opts, args = getopt.getopt(argv,"h:i:f:d:e:t:m:g:n:",["initial=","factor=","dropout=","epochs=","train_dir=", "max_steps=", "no_gpus=", "no_examples"])
+    opts, args = getopt.getopt(argv,"h:i:f:d:e:t:m:g:n:x:",["initial=","factor=","dropout=","epochs=","train_dir=", "max_steps=", "no_gpus=", "no_examples","no_gpus=","example_dir="])
   except getopt.GetoptError:
-    print( 'train.py -i <initial_lr> -d <dropout ratio> -e <no of epochs for decay> -t <train_dir> -m <max steps> -n <# of gpus> -f <decay factor>')
+    print( 'train.py -i <initial_lr> -d <dropout ratio> -e <no of epochs for decay> -t <train_dir> -m <max steps> -g <# of gpus> -f <decay factor> -n <no_examples_per_epoch> -x <example_dir>')
     sys.exit(2)
   for opt, arg in opts:
     if opt == '-h':
-       print( 'train.py -i <initial_lr> -d <dropout ratio> -e <no of epochs for decay> -t <train_dir> -m <max steps> -n <# of gpus> -f <decay factor>')
+       print( 'train.py -i <initial_lr> -d <dropout ratio> -e <no of epochs for decay> -t <train_dir> -m <max steps> -g <# of gpus> -f <decay factor> -n <no_examples_per_epoch> -x <example_dir>')
        sys.exit()
     elif opt in ("-i", "--initial"):
        initial_lr = float(arg)
@@ -273,10 +275,12 @@ def main(argv):  # pylint: disable=unused-argument
        train_dir = arg
     elif opt in ("-m", "--max_steps"):
        max_steps = int(arg)
-    elif opt in ("-n", "--no_examples"):
-       no_examples_epoch = float(arg)
     elif opt in ("-g", "--no_gpus"):
        no_gpus = int(arg)
+    elif opt in ("-n", "--no_examples"):
+       no_examples_epoch = float(arg)
+    elif opt in ("-x", "--example_dir"):
+       data_dir = arg
 
   print('initial_lr=',initial_lr)
   print('decay_factor=',decay_factor)
@@ -286,6 +290,7 @@ def main(argv):  # pylint: disable=unused-argument
   print('max_steps=',max_steps)
   print('no_gpus=',no_gpus)
   print('no_examples_epoc=',no_examples_epoch)
+  print('data_dir = ', data_dir)
   train()
 
 
@@ -297,6 +302,7 @@ dropout = 0.5
 max_steps = FLAGS.max_steps
 no_gpus = FLAGS.num_gpus
 train_dir = FLAGS.train_dir
+data_dir = "../fold0/"
 if __name__ == '__main__':
   main(sys.argv[1:])
 

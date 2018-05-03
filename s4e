@@ -1,0 +1,21 @@
+#!/bin/bash
+set -x
+i=0.1
+f=0.5
+e=100
+n=20000
+m=120101
+g=8
+for x in 0 1 2 3 4
+do
+  t=train_dir_i{$i}_f{$f}_e{$e}_n{$n}_m{$m}_x{$x}
+#  echo python multi_train.py -x "../fold"$x"/" -i $i -f $f -e $e -n $n -m $m  -g $g -t $t ">&" out_{$t}
+#  python eval_gender.py -n 20000 -r 10 -d "../"$f"/" -c train_dir_i0.01_f0.1_e100_n20k_m100k >& eval_out_train_dir_i0.01_f0.1_e100_n20k_m100k_$f
+   python eval_gender.py -n 20000 -v test -r 5 -d "../fold"$x"/" -c Train_Dirs/$t >& Train_Dirs/eval_{$t} 
+done
+
+#x=0
+#r=5
+#t=train_dir_i{$i}_f{$f}_e{$e}_n{$n}_m{$m}_x{$x}
+#   python eval_gender.py -n 20000 -v test -r $r -d "../fold"$x"/" -c $t #>& eval_{$t} 
+

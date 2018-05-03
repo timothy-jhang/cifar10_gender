@@ -69,13 +69,15 @@ def eval_once(sess, saver, summary_writer, top_k_op, summary_op, global_step, co
   print('%s: precision @ 1 = %.3f' % (datetime.now(), precision))
   return precision 
 
-def evaluate():
+def evaluate(data_dir, eval_data):
   """Eval CIFAR-10 for a number of steps."""
   with tf.Graph().as_default() as g:
     # Get images and labels for CIFAR-10.
     leval_data = eval_data == 'test'
-    images, labels = cifar10.inputs(eval_data=leval_data)
 
+    # data_dir = fold1, fold2, ... 
+    images, labels = cifar10.inputs(eval_data=leval_data,data_dir=data_dir)
+    
     # Build a Graph that computes the logits predictions from the
     # inference model.
     # Build inference Graph.
@@ -116,10 +118,6 @@ def evaluate():
         print('No checkpoint file found')
         return
 
-      # Creates a variable to hold the global_step.
-      global_step = tf.get_variable('global_step', [], initializer=tf.constant_initializer(0), trainable=False)
-
-
       coord = tf.train.Coordinator()
       # Start the queue runners.
       threads = []
@@ -131,9 +129,9 @@ def evaluate():
         sumprec = 0.0 
         for i in range(int(no_runs)): # 100 times repetition
           prec = eval_once(sess, saver, summary_writer, top_k_op, summary_op, global_step, coord )
-          print('precision = ', prec)
+          print('>> precision = ', prec)
           sumprec += prec
-        print('average precision = ', sumprec / no_runs)
+        print('>>  average precision = ', sumprec / no_runs)
       except Exception as e:  # pylint: disable=broad-except
         coord.request_stop(e)
       coord.request_stop()
@@ -141,10 +139,10 @@ def evaluate():
 
 
 def main(argv):  # pylint: disable=unused-argument
-  global eval_dir, checkpoint_dir, num_examples, no_runs, eval_data
+  global eval_dir, checkpoint_dir, num_examples, no_runs, eval_data, data_dir
   # options
   try:
-    opts, args = getopt.getopt(argv,"h:e:c:n:r:",["eval_dir=","checkpoint_dir=","no_examples=", "no_runs=" ] )
+    opts, args = getopt.getopt(argv,"h:e:c:d:n:r:v:",["eval_dir=","checkpoint_dir=","no_examples=", "no_runs=" ] )
   except getopt.GetoptError:
     print( 'eval.py -c <checkpoint_dir> -e <eval_dir> -n <no_examples> -r <no_runs> -v <eval_data/test or else> ')
     sys.exit(2)
@@ -156,6 +154,8 @@ def main(argv):  # pylint: disable=unused-argument
        eval_dir = arg
     elif opt in ("-c", "--checkpoint_dir"):
        checkpoint_dir = arg
+    elif opt in ("-d", "--data_dir"):
+       data_dir = arg
     elif opt in ("-n", "--no_examples"):
        num_examples = float(arg)
     elif opt in ("-r", "--no_runs"):
@@ -167,11 +167,12 @@ def main(argv):  # pylint: disable=unused-argument
     tf.gfile.DeleteRecursively(eval_dir)
   tf.gfile.MakeDirs(eval_dir)
   print('checkpoint_dir=', checkpoint_dir)
+  print('data_dir=', data_dir)
   print('eval_dir=',eval_dir)
   print('no_examples=', num_examples)
   print('no_runs=', no_runs)
   print('eval_data=', eval_data)
-  evaluate()
+  evaluate(data_dir, eval_data)
 
 
 eval_data = FLAGS.eval_data
@@ -179,6 +180,8 @@ eval_dir = FLAGS.eval_dir
 checkpoint_dir=FLAGS.checkpoint_dir
 num_examples=FLAGS.num_examples
 no_runs= 20.0
+data_dir = '../fold0/'
+
 if __name__ == '__main__':
   main(sys.argv[1:])
 
